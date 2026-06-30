@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NiCE AI Copilot – Executive Consumption Dashboard</title>
+<style>
+  :root {
+    --bg:#0d1117;--card:#161b22;--card2:#1c2128;--border:#30363d;
+    --accent:#58a6ff;--accent2:#3fb950;--accent3:#f78166;--accent4:#d2a8ff;--accent5:#ffa657;
+    --warn:#e3b341;--danger:#f85149;--text:#e6edf3;--muted:#8b949e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;}
+
+  /* ── Page-level width cap ── */
+  .page-wrap{max-width:1440px;margin:0 auto;width:100%;}
+
+  .header{background:linear-gradient(135deg,#0d1f3c 0%,#0d1117 60%);border-bottom:1px solid var(--border);padding:20px 32px 18px;}
+  .header-inner{max-width:1440px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;}
+  .header-left h1{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.3px;}
+  .header-left p{font-size:12px;color:var(--muted);margin-top:4px;}
+  .header-right{display:flex;gap:12px;flex-shrink:0;}
+  .badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.4px;}
+  .badge-blue{background:rgba(88,166,255,.18);color:var(--accent);border:1px solid rgba(88,166,255,.3);}
+  .badge-green{background:rgba(63,185,80,.18);color:var(--accent2);border:1px solid rgba(63,185,80,.3);}
+
+  .alerts{background:rgba(248,81,73,.04);border-bottom:1px solid rgba(248,81,73,.2);}
+  .alerts-inner{max-width:1440px;margin:0 auto;display:flex;gap:10px;padding:12px 32px;flex-wrap:wrap;}
+  .alert{display:flex;align-items:flex-start;gap:8px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;padding:8px 14px;font-size:12px;color:#ffa0a0;line-height:1.5;}
+  .alert.warn{background:rgba(227,179,65,.1);border-color:rgba(227,179,65,.3);color:#ffd966;}
+  .alert.info{background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.3);color:#99c4ff;}
+  .alert-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+  .main{padding:24px 32px;}
+  .section-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;margin-top:28px;display:flex;align-items:center;gap:8px;}
+  .section-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent);border-radius:2px;}
+
+  /* ── KPI grid: 4 cols max, fixed min ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:12px;}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(4,minmax(160px,1fr));}}
+  @media(max-width:800px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+  .kpi.blue::before{background:var(--accent)}.kpi.green::before{background:var(--accent2)}
+  .kpi.red::before{background:var(--danger)}.kpi.purple::before{background:var(--accent4)}
+  .kpi.orange::before{background:var(--accent5)}.kpi.warn::before{background:var(--warn)}
+  .kpi-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.3px;}
+  .kpi-value{font-size:26px;font-weight:700;line-height:1.2;margin-top:6px;}
+  .kpi-value.blue{color:var(--accent)}.kpi-value.green{color:var(--accent2)}.kpi-value.red{color:var(--danger)}
+  .kpi-value.purple{color:var(--accent4)}.kpi-value.orange{color:var(--accent5)}.kpi-value.warn{color:var(--warn)}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+  .kpi-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;margin-top:6px;}
+  .kpi-badge.up{background:rgba(63,185,80,.15);color:var(--accent2)}.kpi-badge.down{background:rgba(248,81,73,.15);color:var(--danger)}
+  .kpi-badge.alert{background:rgba(248,81,73,.15);color:var(--danger)}.kpi-badge.warn{background:rgba(227,179,65,.15);color:var(--warn)}
+
+  /* ── Grid rows: capped at 1440px, sensible column mins ── */
+  .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px;}
+  .row3{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:16px;margin-bottom:16px;}
+  .row-full{margin-bottom:16px;}
+  @media(max-width:960px){.row2,.row3{grid-template-columns:1fr;}}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;min-width:0;}
+  .card-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .card-title span.chip{font-size:10px;font-weight:500;background:rgba(88,166,255,.12);color:var(--accent);border-radius:4px;padding:2px 8px;white-space:nowrap;flex-shrink:0;}
+
+  /* ── Tables: fixed layout, controlled overflow ── */
+  .table-wrap{overflow-x:auto;width:100%;}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  th{text-align:left;padding:6px 8px;color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.3px;border-bottom:1px solid var(--border);white-space:nowrap;overflow:hidden;}
+  td{padding:6px 8px;border-bottom:1px solid rgba(48,54,61,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;}
+  td strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,.03);}
+  /* First col wider, number cols narrow */
+  td:first-child,th:first-child{white-space:nowrap;}
+  .td-mono{font-family:monospace;font-size:11px;color:var(--muted);}
+  .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+  .tag-org{background:rgba(63,185,80,.15);color:var(--accent2)}.tag-ms{background:rgba(88,166,255,.15);color:var(--accent)}
+  .tag-user{background:rgba(210,168,255,.15);color:var(--accent4)}.tag-part{background:rgba(255,166,87,.15);color:var(--accent5)}
+  .tag-prem{background:rgba(248,81,73,.15);color:var(--danger)}.tag-free{background:rgba(63,185,80,.12);color:var(--accent2)}
+  .tag-warn{background:rgba(227,179,65,.15);color:var(--warn)}
+  .donut-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .insight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+  .insight{border-radius:8px;padding:14px 16px;}
+  .insight.danger{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);}
+  .insight.warn{background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.25);}
+  .insight.info{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);}
+  .insight.success{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.25);}
+  .insight-head{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .insight-body{font-size:12px;color:var(--muted);line-height:1.6;}
+  .insight-body strong{color:var(--text);}
+  .divider{border:none;border-top:1px solid var(--border);margin:28px 0 0;}
+  footer{text-align:center;padding:20px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:16px;}
+  canvas{display:block;}
+
+  /* ── Tab navigation ── */
+  .tab-nav{background:#0d1117;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+  .tab-nav-inner{max-width:1440px;margin:0 auto;display:flex;gap:0;padding:0 32px;}
+  .tab-btn{padding:14px 22px;font-size:13px;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn .tab-badge{font-size:10px;background:rgba(88,166,255,.15);color:var(--accent);border-radius:10px;padding:1px 7px;font-weight:600;}
+  .tab-btn.active2{color:#d2a8ff;border-bottom-color:#d2a8ff;}
+  .tab-btn.active2 .tab-badge{background:rgba(210,168,255,.15);color:#d2a8ff;}
+  .tab-panel{display:none;}.tab-panel.active{display:block;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <h1>NiCE AI Copilot — Executive Consumption Dashboard</h1>
+      <p>Report period: 2 June – 30 June 2026 &nbsp;·&nbsp; Data refreshed: 30 Jun 2026, 04:41 IST &nbsp;·&nbsp; Sources: 8 reports</p>
+    </div>
+    <div class="header-right">
+      <span class="badge badge-blue">June 2026</span>
+      <span class="badge badge-green">Live Data</span>
+    </div>
+  </div>
+</div>
+
+<div class="alerts">
+  <div class="alerts-inner">
+    <div class="alert"><span class="alert-icon">🔴</span><div><strong>Overage Alert:</strong>&nbsp;Total consumption (340.7K credits) exceeds total entitlement (265K) by&nbsp;<strong>+28.6%</strong>. PAYG charges active on NiCE-All-PROD.</div></div>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" id="btn-copilot" onclick="switchTab('copilot')">🤖 Copilot Consumption <span class="tab-badge">8 reports</span></button>
+    <button class="tab-btn" id="btn-cowork" onclick="switchTab('cowork')">⚙️ Cowork User Activity <span class="tab-badge">June 2026</span></button>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div id="tab-copilot" class="tab-panel active">
+    <div class="main">
+      <div class="section-title">Tenant Overview · June 2026</div>
+      <div class="kpi-grid">
+        <div class="kpi blue"><div class="kpi-label">TOTAL USERS (M365 ACTIVITY)</div><div class="kpi-value blue">2,250</div><div class="kpi-sub">1,608 active (71.5%) · 642 inactive</div></div>
+        <div class="kpi green"><div class="kpi-label">TOTAL PROMPTS SUBMITTED</div><div class="kpi-value green">28,489</div><div class="kpi-sub">Work: 19,364 · Web: 9,125</div></div>
+        <div class="kpi red"><div class="kpi-label">TOTAL CREDITS CONSUMED</div><div class="kpi-value red">340.7K</div><div class="kpi-sub">Prepaid: 320.6K · PAYG: 20.1K</div></div>
+        <div class="kpi warn"><div class="kpi-label">ENTITLEMENT CAPACITY</div><div class="kpi-value warn">265K</div><div class="kpi-sub">4 active environments</div></div>
+      </div>
+      <div class="section-title">Daily Consumption Trend · Credits by Day</div>
+      <div class="row-full"><div class="card"><div class="card-title">Daily Prepaid vs Pay-as-you-go Credits</div><canvas id="dailyChart" width="1100" height="230" style="width:100%;height:230px;"></canvas></div></div>
+    </div>
+  </div>
+  <div id="tab-cowork" class="tab-panel"><div class="main"><div class="section-title">Cowork Platform Overview · June 2026</div></div></div>
+</div>
+
+<footer>NiCE AI Copilot · Executive Consumption Dashboard · Generated 30 June 2026</footer>
+
+<script>
+function dpr(){return window.devicePixelRatio||1;}
+function setupCanvas(id){const el=document.getElementById(id);if(!el)return null;const rect=el.getBoundingClientRect();const w=rect.width||el.offsetWidth||parseInt(el.getAttribute('width'))||400;const h=rect.height||el.offsetHeight||parseInt(el.getAttribute('height'))||200;const r=dpr();el.width=Math.round(w*r);el.height=Math.round(h*r);el.style.width=w+'px';el.style.height=h+'px';const ctx=el.getContext('2d');ctx.scale(r,r);ctx._w=w;ctx._h=h;return ctx;}
+function fmt(v){if(v>=1000)return (v/1000).toFixed(v>=10000?0:1)+'K';return String(Math.round(v));}
+function stackedBar(id,labels,datasets){const ctx=setupCanvas(id);if(!ctx)return;const W=ctx._w,H=ctx._h;const pad={top:20,right:16,bottom:52,left:54};const cw=W-pad.left-pad.right;const ch=H-pad.top-pad.bottom;const totals=labels.map((_,i)=>datasets.reduce((s,d)=>s+(d.data[i]||0),0));const maxVal=Math.max(...totals,1);const steps=5;ctx.font='10px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';for(let s=0;s<=steps;s++){const v=(maxVal/steps)*s;const y=pad.top+ch-(ch*s/steps);ctx.strokeStyle='#21262d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+cw,y);ctx.stroke();ctx.fillStyle='#8b949e';ctx.fillText(fmt(v),pad.left-6,y);}const barW=Math.min(30,(cw/labels.length)*0.55);const barGap=cw/labels.length;labels.forEach((label,i)=>{const cx=pad.left+barGap*i+barGap/2;let yBase=pad.top+ch;datasets.forEach(ds=>{const val=ds.data[i]||0;const barH=ch*(val/maxVal);if(barH>0){ctx.fillStyle=ds.color;const x=cx-barW/2;const y=yBase-barH;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,barW,barH,[2,2,0,0]):ctx.rect(x,y,barW,barH);ctx.fill();yBase-=barH;}});ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(label,cx,pad.top+ch+6);});}
+stackedBar('dailyChart',['Jun 2','Jun 3','Jun 4','Jun 5'],[{label:'Prepaid',color:'rgba(88,166,255,.75)',data:[48761,55358,63098,15191]},{label:'PAYG',color:'rgba(248,81,73,.85)',data:[0,0,12468,454]}]);
+function switchTab(tab){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active','active2'));document.getElementById('tab-'+tab).classList.add('active');const btn=document.getElementById('btn-'+tab);btn.classList.add(tab==='cowork'?'active2':'active');}
+</script>
+</body>
+</html>
